@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-PROJECT_DIR="$(pwd)"
+PROJECT_DIR=$( dirname "$0" )
 PREFIX_DIR="$HOME/.win7games"
 CACHE_DIR="$PROJECT_DIR/.cache"
 
@@ -77,19 +77,9 @@ else
     echo "CardGames.dll not found, skipping audio patch."
 fi
 
-# Create .desktop files
 echo "Creating .desktop files..."
-APPS_DIR="$HOME/.local/share/applications"
-mkdir -p "$APPS_DIR"
-
-# Find installed games to create shortcuts
-# We look in Program Files inside the prefix
-GAMES_ROOT="$PREFIX_DIR/drive_c/Program Files/Microsoft Games"
-if [ ! -d "$GAMES_ROOT" ]; then
-    GAMES_ROOT="$PREFIX_DIR/drive_c/Program Files (x86)/Microsoft Games"
-fi
-
 wine winemenubuilder
 
-echo "Done! Games should be installed and patched."
+rm -rf $PROJECT_DIR/.venv
 
+echo "Done! Games should be installed and patched."
