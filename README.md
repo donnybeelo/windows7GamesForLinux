@@ -40,9 +40,10 @@ git clone https://github.com/donnybeelo/windows7GamesForLinux
 ## Troubleshooting
 
 <details>
-<summary><b>I'm not hearing any sound</b></summary>
+<summary><h3>I'm not hearing any sound</h3></summary>
 
 Make sure you have all the gstreamer plugins installed, e.g. for Arch:
+  
 ```bash
 sudo pacman -S gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly
 ```
@@ -53,21 +54,24 @@ sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.
 In my testing, `gst-plugins-ugly` ended up being the package that got sound working
 </details>
 <details>
-<summary><b>The game isn't running as well as I expected</b></summary>
+<summary><h3>The game isn't running as well as I expected</h3></summary>
 
 Installing libav for gstreamer worked for me, e.g. for Arch:
+
 ```bash
 sudo pacman -S gst-libav
 ```
 For Ubuntu:
+  
 ```bash
 sudo apt install gstreamer1.0-libav
 ```
 </details>
 <details>
-<summary><b>Something else / I tried one of the fixes above and it didn't help</b></summary>
+<summary><h3>Something else / I tried one of the fixes above and it didn't help</h3></summary>
 
 Run the following in your terminal:
+  
 ```bash
 WINEPREFIX=$HOME/.win7games wine "$HOME/.win7games/drive_c/Program Files/Microsoft Games/Solitaire/Solitaire.exe"
 ```
