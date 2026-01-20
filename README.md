@@ -19,9 +19,7 @@ Dependencies:
 - Wine 11
 - ffmpeg
 - 7z
-- python3, and the following python packages
-  - lief
-  - pefile
+- python3
 
 1. Download a copy of the Windows 7 Games zip file, and extract it: https://win7games.com/
 
