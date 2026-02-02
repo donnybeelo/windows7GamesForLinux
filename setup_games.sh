@@ -5,6 +5,66 @@ set -e
 PROJECT_DIR=$( dirname "$0" )
 PREFIX_DIR="$HOME/.win7games"
 CACHE_DIR="$PROJECT_DIR/.cache"
+PATCH_ONLY=false
+INSTALLER_PATH=""
+
+helptext="Usage: $0 [OPTIONS] <installer.exe>
+   or: $0 -p|--patch [wine_prefix_directory]
+
+Install and patch Windows 7 games for Wine compatibility.
+
+OPTIONS:
+    -h, --help              Show this help message and exit
+    -p, --patch [PREFIX]    Patch-only mode. Skip installation and only apply patches
+                            to an existing Wine prefix. If PREFIX is not specified,
+                            defaults to ~/.win7games
+
+EXAMPLES:
+    # Install and patch games from installer
+    $0 Win7GamesForWindows10and11.exe
+
+    # Patch existing installation in default prefix
+    $0 --patch
+
+    # Patch existing installation in custom prefix
+    $0 --patch /path/to/custom/prefix
+"
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    	-h|--help)
+		    echo "$helptext"
+		    exit 0
+            ;;
+        -p|--patch)
+            PATCH_ONLY=true
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                PREFIX_DIR="$2"
+                shift 2
+            else
+                # Use default prefix if no argument provided
+                PREFIX_DIR="$HOME/.win7games"
+                shift
+            fi
+            ;;
+        *)
+            INSTALLER_PATH="$1"
+            shift
+            ;;
+    esac
+done
+
+# Validate arguments
+if [ "$PATCH_ONLY" = false ] && [ -z "$INSTALLER_PATH" ]; then
+	echo "$helptext"
+    exit 1
+fi
+
+if [ "$PATCH_ONLY" = true ] && [ ! -d "$PREFIX_DIR" ]; then
+    echo "Error: Wine prefix directory does not exist: $PREFIX_DIR"
+    exit 1
+fi
 
 # Ensure directories exist
 mkdir -p "$PREFIX_DIR"
@@ -29,15 +89,20 @@ source "$PROJECT_DIR/.venv/bin/activate"
 echo "Installing Python dependencies..."
 pip install --disable-pip-version-check --quiet lief pefile
 
-# Setup WINEPREFIX
-echo "Setting up Wine prefix at $PREFIX_DIR..."
-export WINEPREFIX="$PREFIX_DIR"
-export WINEARCH=win64
-# Initialize prefix (quietly)
-wineboot -u >/dev/null 2>&1 || true
+# Setup WINEPREFIX and run installer (skip if patch-only mode)
+if [ "$PATCH_ONLY" = false ]; then
+    echo "Setting up Wine prefix at $PREFIX_DIR..."
+    export WINEPREFIX="$PREFIX_DIR"
+    export WINEARCH=win64
+    # Initialize prefix (quietly)
+    wineboot -u >/dev/null 2>&1 || true
 
-echo "Running installer (Silent)..."
-wine "$1" /S
+    echo "Running installer (Silent)..."
+    wine "$INSTALLER_PATH" /S
+else
+    echo "Patch-only mode: skipping installation..."
+    export WINEPREFIX="$PREFIX_DIR"
+fi
 
 # Run Patcher Script
 echo "Patching games with localizations..."
@@ -60,7 +125,7 @@ fi
 if [ -f "$SOURCE_DLL" ]; then
     echo "Found CardGames.dll at $SOURCE_DLL"
     python3 dll_patcher.py "$SOURCE_DLL" "CardGames_fixed.dll"
-    
+
     if [ -f "CardGames_fixed.dll" ]; then
         echo "Distributing patched DLL..."
         for d in "$GAMES_ROOT"/*; do
@@ -77,9 +142,11 @@ else
     echo "CardGames.dll not found, skipping audio patch."
 fi
 
-echo "Creating .desktop files..."
-wine winemenubuilder
+if [ "$PATCH_ONLY" = false ]; then
+    echo "Creating .desktop files..."
+    wine winemenubuilder
+fi
 
 rm -rf $PROJECT_DIR/.venv
 
-echo "Done! Games should be installed and patched."
+echo "Done! Games patched successfully."
