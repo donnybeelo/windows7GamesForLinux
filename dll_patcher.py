@@ -104,7 +104,7 @@ def patch_pe(dll_path, resources_dir, output_path):
         print(f"Could not find DATA directory in {resources_dir}")
         return False
 
-    for root, dirs, files in os.walk(data_dir):
+    for root, _dirs, files in os.walk(data_dir):
         for filename in files:
             if filename.upper().endswith(".WMA"):
                 # Construct resource name
@@ -146,8 +146,8 @@ def patch_pe(dll_path, resources_dir, output_path):
     # Check if last section is indeed .rsrc or something we can append to
     # Usually .rsrc is last.
 
-    file_alignment = pe.OPTIONAL_HEADER.FileAlignment
-    section_alignment = pe.OPTIONAL_HEADER.SectionAlignment
+    file_alignment = pe.OPTIONAL_HEADER.FileAlignment  # type: ignore[attr-defined]
+    section_alignment = pe.OPTIONAL_HEADER.SectionAlignment  # type: ignore[attr-defined]
 
     old_raw_size = rsrc_section.SizeOfRawData
     old_raw_ptr = rsrc_section.PointerToRawData
@@ -165,14 +165,14 @@ def patch_pe(dll_path, resources_dir, output_path):
 
     # Update SizeOfImage
     new_image_size = align(old_va + new_raw_size, section_alignment)
-    pe.OPTIONAL_HEADER.SizeOfImage = new_image_size
+    pe.OPTIONAL_HEADER.SizeOfImage = new_image_size  # type: ignore[attr-defined]
 
     print(f"Section expanded: {hex(old_raw_size)} -> {hex(new_raw_size)}")
 
     # 5. Update Resource Directory
     updated_count = 0
     if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
-        for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+        for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:  # type: ignore[attr-defined]
             if hasattr(resource_type, "directory"):
                 for resource_entry in resource_type.directory.entries:
                     res_name = str(resource_entry.name) if resource_entry.name else None

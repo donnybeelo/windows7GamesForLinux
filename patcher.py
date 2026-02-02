@@ -67,27 +67,35 @@ def copy_resources(target_exe_path, source_mui_path):
         print(f"  Error parsing files: {e}")
         return False
 
+    if binary is None:
+        print("  Error: Could not parse target executable.")
+        return False
+
+    if mui is None:
+        print("  Error: Could not parse MUI file.")
+        return False
+
     if not binary.resources:
-        print("  Target has no resources, creating root...")
-        binary.resources = lief.PE.ResourceDirectory(0)
-    
+        print("  Target executable has no resources.")
+        return False
+
     if not mui.resources:
-        print("  MUI has no resources.")
+        print("  MUI file has no resources.")
         return False
 
     try:
         copy_nodes(binary.resources, mui.resources)
-        
+
         # Configure Builder
         config = lief.PE.Builder.config_t()
         config.resources = True
-        
+
         builder = lief.PE.Builder(binary, config)
         builder.build()
-        
+
         tmp_output = target_exe_path + ".tmp"
         builder.write(tmp_output)
-        
+
         # Replace original
         os.replace(tmp_output, target_exe_path)
         print("  Success.")
@@ -130,13 +138,17 @@ def main(prefix_path):
         for exe_path in exes:
             exe_name = os.path.basename(exe_path)
             
-            # Look for MUI in en-US
-            mui_path = os.path.join(game_dir, "en-US", f"{exe_name}.mui")
-            if not os.path.exists(mui_path):
-                # Try en_US just in case
-                mui_path = os.path.join(game_dir, "en_US", f"{exe_name}.mui")
-                
-            if not os.path.exists(mui_path):
+            # Look for MUI in any language subdirectory
+            mui_path = None
+            for item in os.listdir(game_dir):
+                item_path = os.path.join(game_dir, item)
+                if os.path.isdir(item_path):
+                    candidate_mui = os.path.join(item_path, f"{exe_name}.mui")
+                    if os.path.exists(candidate_mui):
+                        mui_path = candidate_mui
+                        break
+
+            if not mui_path:
                 print(f"  No MUI found for {exe_name}")
                 continue
                 
