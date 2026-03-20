@@ -144,7 +144,7 @@ fi
 
 if [ "$PATCH_ONLY" = false ]; then
     echo "Creating .desktop files..."
-    wine winemenubuilder
+    wine winemenubuilder || true
 fi
 
 rm -rf $PROJECT_DIR/.venv
